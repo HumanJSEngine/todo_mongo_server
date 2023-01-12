@@ -2,15 +2,17 @@ const { response } = require("express");
 const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
-const { Todo } = require("./model/TodoModel");
 const config = require("./config/key.js");
 const app = express();
 
 const port = 5000;
 //요청이 들어오면 json 사용 및 url 인코딩 진행해줌
+app.use(express.static(path.join(__dirname, "../client/build/")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "../client/build/")));
+
+app.use('/api/post', require('./router/Post.js'));
+app.use('/api/user', require('./router/User.js'));
 
 app.listen(port, () => {
   mongoose
@@ -34,88 +36,92 @@ app.get("*", (request, response) => {
   response.sendFile(path.join(__dirname, "../client/build/index.html"));
 });
 
-//할일 등록
-app.post("/api/post/submit", (request, response) => {
-  let temp = request.body;
-  const todoPost = new Todo(temp);
-  todoPost
-    .save()
-    .then(() => {
-      response.status(200).json({ success: true });
-    })
-    .catch((error) => {
-      console.log(err);
-      response.status(400).json({ success: false });
-    });
-});
 
-app.post("/api/post/list", (request, response) => {
-  console.log("전체목록 호출");
-  Todo.find({})
-    .exec()
-    .then((doc) => {
-      console.log(doc);
-      response.status(200).json({ success: true, initTodo: doc });
-    })
-    .catch((error) => {
-      console.log(error);
-      response.status(400).json({ success: false });
-    });
-});
+//할일 등록 Post를 분리
 
-// 할일의 completed를 업데이트
-app.post("/api/post/updatetoggle", (request, response) => {
-  let temp = {
-    completed: request.body.completed,
-  };
-  console.log(request.body);
-  Todo.updateOne({ id: request.body.id }, { $set: temp })
-    .exec()
-    .then(() => {
-      console.log("completed 업데이트 완료");
-      response.status(200).json({ success: true });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+// app.post("/api/post/submit", (request, response) => {
+//   let temp = request.body;
+//   const todoPost = new Todo(temp);
+//   todoPost
+//     .save()
+//     .then(() => {
+//       response.status(200).json({ success: true });
+//     })
+//     .catch((error) => {
+//       console.log(err);
+//       response.status(400).json({ success: false });
+//     });
+// });
 
-  //mongoose 문서 참조
-});
 
-//타이틀 업데이트
+// app.post("/api/post/list", (request, response) => {
+//   console.log("전체목록 호출");
+//   Todo.find({})
+//     .exec()
+//     .then((doc) => {
+//       console.log(doc);
+//       response.status(200).json({ success: true, initTodo: doc });
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//       response.status(400).json({ success: false });
+//     });
+// });
 
-app.post("/api/post/updatetitle", (request, response) => {
-  let temp = {
-    title: request.body.title,
-  };
-  Todo.updateOne({ id: request.body.id }, { $set: temp })
-    .exec()
-    .then(() => {
-      console.log("title 업데이트 완료");
-      response.status(200).json({ success: true });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-});
 
-//할일 삭제
+// // 할일의 completed를 업데이트
+// app.post("/api/post/updatetoggle", (request, response) => {
+//   let temp = {
+//     completed: request.body.completed,
+//   };
+//   console.log(request.body);
+//   Todo.updateOne({ id: request.body.id }, { $set: temp })
+//     .exec()
+//     .then(() => {
+//       console.log("completed 업데이트 완료");
+//       response.status(200).json({ success: true });
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//     });
 
-app.post("/api/post/delete", (request, response) => {
-  console.log(request.body);
+//   //mongoose 문서 참조
+// });
 
-  Todo.deleteOne({ id: request.body.id })
-    .exec()
-    .then(() => {
-      response.status(200).json({ success: true });
-    })
-    .catch((error) => {
-      console.log(error);
-      response.status(400).json({ success: false });
-    });
-});
+// //타이틀 업데이트
 
-app.post('/api/post/deleteAll', (request, response) => {
-  Todo.deleteMany()
-  .exec()
-});
+// app.post("/api/post/updatetitle", (request, response) => {
+//   let temp = {
+//     title: request.body.title,
+//   };
+//   Todo.updateOne({ id: request.body.id }, { $set: temp })
+//     .exec()
+//     .then(() => {
+//       console.log("title 업데이트 완료");
+//       response.status(200).json({ success: true });
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//     });
+// });
+
+// //할일 삭제
+// app.post("/api/post/delete", (request, response) => {
+//   console.log(request.body);
+
+//   Todo.deleteOne({ id: request.body.id })
+//     .exec()
+//     .then(() => {
+//       response.status(200).json({ success: true });
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//       response.status(400).json({ success: false });
+//     });
+// });
+
+// //할일 모두삭제
+// app.post("/api/post/deleteAll", (request, response) => {
+//   Todo.deleteMany().exec();
+// });
+
