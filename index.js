@@ -17,8 +17,8 @@ app.use(express.static(path.join(__dirname, "./build/")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/post', require('./router/Post.js'));
-app.use('/api/user', require('./router/User.js'));
+app.use("/api/post", require("./router/Post.js"));
+app.use("/api/user", require("./router/User.js"));
 
 app.listen(port, () => {
   mongoose
@@ -32,16 +32,18 @@ app.listen(port, () => {
     });
 });
 
-app.get("/", (request, response) => {
-  response.sendFile(path.join(__dirname, "../client/build/index.html"));
+app.get("/", (req, res) => {
+  // 파일을 보여줌
+  res.sendFile(path.join(__dirname, "./build/index.html"));
+});
+//  주소가 없는 경우에 강제 URL 이동
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "./build/index.html"));
 });
 
-//주소가 없는 경우에 강제 URL 이동
-
-app.get("*", (request, response) => {
-  response.sendFile(path.join(__dirname, "../client/build/index.html"));
+app.get((req, res) => {
+  res.sendFile(path.join(__dirname, "./build/index.html"));
 });
-
 
 //할일 등록 Post를 분리
 
@@ -59,7 +61,6 @@ app.get("*", (request, response) => {
 //     });
 // });
 
-
 // app.post("/api/post/list", (request, response) => {
 //   console.log("전체목록 호출");
 //   Todo.find({})
@@ -73,7 +74,6 @@ app.get("*", (request, response) => {
 //       response.status(400).json({ success: false });
 //     });
 // });
-
 
 // // 할일의 completed를 업데이트
 // app.post("/api/post/updatetoggle", (request, response) => {
@@ -130,4 +130,3 @@ app.get("*", (request, response) => {
 // app.post("/api/post/deleteAll", (request, response) => {
 //   Todo.deleteMany().exec();
 // });
-
