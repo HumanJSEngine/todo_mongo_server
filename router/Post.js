@@ -1,19 +1,22 @@
-const { request } = require("express");
 let express = require("express");
 let router = express.Router();
-const { Todo } = require("../model/TodoModel.js");
-const { User } = require("../model/UserModel.js");
 
-// 할일 등록
+// Todo 모델을 가지고 온다.
+const { Todo } = require("../model/TodoModel");
+
+// User 모델의 내용을 참조하기 위함.
+const { User } = require("../model/UserModel");
+
 router.post("/submit", (req, res) => {
-  // console.log(req.body);
-  // let temp = req.body;
   let temp = {
     id: req.body.id,
     title: req.body.title,
     completed: req.body.completed,
-    uid:req.body.uid,
-    
+    uid: req.body.uid,
+    // 여기서 바로 author 를 저장할 수 없다.
+    // User Modle 에서 uid 를 이용해서
+    // ObjectId 를 알아내고.. 내용을 복사해야
+    // author : {} 에 값을 넣을 수 있음.
   };
 
   // User Model 에서 req.body.uid 로 받은 값을
@@ -41,96 +44,117 @@ router.post("/submit", (req, res) => {
       console.log(err);
     });
 });
-
-router.post("/list", (request, response) => {
-  console.log(request.body);
+// 목록 읽어오기
+router.post("/list", (req, res) => {
   let sort = {};
-  if (request.body.sort === "최신글") {
+  if (req.body.sort === "최신글") {
     sort = { id: -1 };
   } else {
     sort = { id: 1 };
   }
 
-  Todo.find({ title: new RegExp(request.body.search), uid:request.body.uid })
+  Todo.find({ title: new RegExp(req.body.search), uid: req.body.uid })
     .populate("author")
     .sort(sort)
-    .skip(request.body.skip)
+    .skip(req.body.skip) // 0 ~ 4, 5 ~ 9, 10~14
     .limit(5)
     .exec()
     .then((doc) => {
-      console.log(doc);
-      response.status(200).json({ success: true, initTodo: doc });
+      // console.log(doc);
+      // 총 카운트를 하여서 버튼 출력 여부 결정
+      Todo.count({
+        title: new RegExp(req.body.search),
+        uid: req.body.uid,
+      })
+        .then((number) => {
+          // console.log(number);
+          res.status(200).json({ success: true, initTodo: doc, total: number });
+        })
+        .catch((e) => {
+          console.log(e);
+          res.status(400).json({ success: false });
+        });
     })
     .catch((error) => {
       console.log(error);
-      response.status(400).json({ success: false });
+      res.status(400).json({ success: false });
     });
 });
 
-// 할일의 completed를 업데이트
-router.post("/updatetoggle", (request, response) => {
+// 할일의 complted 를 업데이트
+router.post("/updatetoggle", (req, res) => {
+  // console.log(req.body);
   let temp = {
-    completed: request.body.completed,
+    completed: req.body.completed,
   };
-  Todo.updateOne({ id: request.body.id }, { $set: temp })
+
+  // mongoose 문서참조
+  Todo.updateOne({ id: req.body.id }, { $set: temp })
     .exec()
     .then(() => {
-      console.log("completed 업데이트 완료");
-      response.status(200).json({ success: true });
+      // console.log("completed 업데이트 완료");
+      res.status(200).json({ success: true });
     })
-    .catch((error) => {
-      console.log(error);
+    .catch((err) => {
+      console.log(err);
     });
 });
-
-router.post("/updatetitle", (request, response) => {
+// 타이틀 업데이트
+router.post("/updatetitle", (req, res) => {
+  // console.log(req.body);
   let temp = {
-    title: request.body.title,
+    title: req.body.title,
   };
-  Todo.updateOne({ id: request.body.id }, { $set: temp })
+
+  // mongoose 문서참조
+  Todo.updateOne({ id: req.body.id }, { $set: temp })
     .exec()
     .then(() => {
-      console.log("title 업데이트 완료");
-      response.status(200).json({ success: true });
+      // console.log("completed 업데이트 완료");
+      res.status(200).json({ success: true });
     })
-    .catch((error) => {
-      console.log(error);
+    .catch((err) => {
+      console.log(err);
+    });
+});
+// 할일 삭제
+router.post("/delete", (req, res) => {
+  // console.log(req.body);
+  Todo.deleteOne({ id: req.body.id })
+    .exec()
+    .then(() => {
+      res.status(200).json({ success: true });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(400).json({ success: false });
+    });
+});
+// 전체 할일 삭제
+router.post("/deleteall", (req, res) => {
+  Todo.deleteMany()
+    .exec()
+    .then(() => {
+      res.status(200).json({ success: true });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(400).json({ success: false });
     });
 });
 
-//할일 삭제
-router.post("/delete", (request, response) => {
-  console.log(request.body);
-
-  Todo.deleteOne({ id: request.body.id })
-    .exec()
-    .then(() => {
-      response.status(200).json({ success: true });
-    })
-    .catch((error) => {
-      console.log(error);
-      response.status(400).json({ success: false });
-    });
-});
-
-//할일 모두삭제
-router.post("/deleteAll", (request, response) => {
-  Todo.deleteMany().exec();
-});
-
+// 사용자 제거
 router.post("/userout", (req, res) => {
-  console.log("사용자 삭제 ", req.body);
-  let temp = {
-    uid: req.body.uid,
-  };
+  // console.log("사용자 삭제 ", req.body);
   // mongoose 문서참조
   User.deleteOne({ uid: req.body.uid })
     .exec()
     .then(() => {
-      console.log("사용자 삭제 성공!!!");
+      // console.log("사용자 삭제 성공!!!");
+      // 실제 Post Model 삭ㅈ[]
       Todo.deleteMany({ uid: req.body.uid })
         .then(() => {
-          console.log("기록물 삭제 성공!!!");
+          // console.log("기록물 삭제 성공!!!");
           res.status(200).json({ success: true });
         })
         .catch((err) => {
@@ -143,6 +167,5 @@ router.post("/userout", (req, res) => {
       console.log(err);
     });
 });
-
 
 module.exports = router;

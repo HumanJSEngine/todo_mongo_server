@@ -7,7 +7,13 @@ const app = express();
 
 const port = 5000;
 //요청이 들어오면 json 사용 및 url 인코딩 진행해줌
-app.use(express.static(path.join(__dirname, "../client/build/")));
+var cors = require("cors");
+let corsOptions = {
+  origin: "*", // 출처 허용 옵션
+  credential: true, // 사용자 인증이 필요한 리소스(쿠키 등) 접근
+};
+app.use(cors(corsOptions));
+app.use(express.static(path.join(__dirname, "./build/")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
